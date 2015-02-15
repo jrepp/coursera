@@ -10,5 +10,5 @@ complete <- function(directory, file.ids=1:332) {
     id = c(id, i)
   }
   
-  cbind(id, nobs)
+  data.frame(id, nobs)
 }
