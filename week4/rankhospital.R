@@ -1,20 +1,5 @@
- 
-#
-# 
-#
 
-df = NULL
-
-cached_reader <- function(...) {
-    if (is.null(df)) {
-        df <<- read.csv(...)
-    } else {
-      message("using cached result")
-    }
-    df
-}
-
-best <- function(state, outcome_name,reader=read.csv) {
+rankhospital <- function(state, outcome_name, top_n, reader=read.csv) {
   # Use the specified reader to get the data frame
   outcomes <- reader("outcome-of-care-measures.csv", colClasses= "character")
   states <- factor(outcomes$State)
@@ -45,23 +30,18 @@ best <- function(state, outcome_name,reader=read.csv) {
   }
   
   # sort the hospitals in increasing order by outcome
-  order_by_rate <- order(values, na.last=TRUE, decreasing=FALSE)
+  order_by_rate <- order(values, statehospitals$hospital, na.last=TRUE, decreasing=FALSE)
   outcomes_sorted <- statehospitals[order_by_rate,]
   
-  # remove NAs 
+  # remove NAs
   outcomes_sorted <- outcomes_sorted[!is.na(outcomes_sorted[outcome_name]),]
   
-  # select all tied outcomes
-  best_value <- values[order_by_rate][[1]]
-  top_outcomes <- outcomes_sorted[outcomes_sorted[outcome_name] <= best_value,]
+  if (top_n == "best") top_n <- 1
+  else if (top_n == "worst") top_n <- length(outcomes_sorted[[1]])
+  else if (top_n > length(outcomes_sorted[[1]])) return(NA)
   
-  # order alphabetically
-  top_outcomes <- top_outcomes[order(top_outcomes$hospital),]
-  
-  # return the best value
-  top_outcomes[1,1]
+  # return the rank value
+  outcomes_sorted[top_n,1]
 }
 
-
-best("WA", "pneumonia", cached_reader)
 
